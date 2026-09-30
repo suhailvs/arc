@@ -1,5 +1,6 @@
 import { Address } from 'viem';
 export const CONTRACT_ADDRESS = (process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '0x0000000000000000000000000000000000000000') as Address;
+export const TESTNET_CONTRACT_ADDRESS = (process.env.NEXT_PUBLIC_TESTNET_CONTRACT_ADDRESS || '0x0000000000000000000000000000000000000000') as Address;
 export const abi = [
   {type:'function',name:'join',stateMutability:'nonpayable',inputs:[{name:'limit',type:'int256'}],outputs:[]},
   {type:'function',name:'setCreditLimit',stateMutability:'nonpayable',inputs:[{name:'limit',type:'int256'}],outputs:[]},

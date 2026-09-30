@@ -34,9 +34,10 @@ Install Foundry, then:
 
 ```bash
 export ARC_MAINNET_RPC_URL=https://rpc.mainnet.arc.io
+export ARC_TESTNET_RPC_URL=https://rpc.testnet.arc.io
 export PRIVATE_KEY=0xYOUR_DEPLOYER_PRIVATE_KEY
 forge build
-forge script script/Deploy.s.sol --rpc-url "$ARC_MAINNET_RPC_URL" --private-key "$PRIVATE_KEY" --broadcast
+forge script script/Deploy.s.sol --rpc-url "$ARC_TESTNET_RPC_URL" --private-key "$PRIVATE_KEY" --broadcast
 ```
 
 Copy the deployed `MutualCredit` address into `.env.local`:

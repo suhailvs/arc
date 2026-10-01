@@ -24,9 +24,12 @@ A tiny LETS-style mutual-credit ledger deployed on Arc mainnet.
 ```bash
 npm install
 cp .env.example .env.local
-# edit NEXT_PUBLIC_CONTRACT_ADDRESS after deployment
+# Set NEXT_PUBLIC_ARC_NETWORK to testnet or mainnet.
+# Configure the matching contract address after deployment.
 npm run dev
 ```
+
+`NEXT_PUBLIC_ARC_NETWORK` selects the Arc network at build time. Use `testnet` (the default) or `mainnet`.
 
 ## Deploy contract with Foundry
 

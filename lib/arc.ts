@@ -15,3 +15,6 @@ export const arcTestnet = defineChain({
   rpcUrls: { default:{ http:['https://rpc.testnet.arc.io'] } },
   blockExplorers:{ default:{name:'Arc Testnet Explorer',url:'https://explorer.testnet.arc.io/'} }
 });
+
+export const activeIsTestnet = process.env.NEXT_PUBLIC_ARC_NETWORK !== 'mainnet';
+export const activeArcNetwork = activeIsTestnet ? arcTestnet : arc;

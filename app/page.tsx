@@ -11,7 +11,7 @@ import {
   useWaitForTransactionReceipt,
   useWriteContract,
 } from 'wagmi';
-import { arc, arcTestnet } from '../lib/arc';
+import { activeArcNetwork as network, activeIsTestnet as isTestnet, arc } from '../lib/arc';
 import { abi, CONTRACT_ADDRESS, TESTNET_CONTRACT_ADDRESS } from '../lib/contract';
 
 const ZERO = '0x0000000000000000000000000000000000000000' as Address;
@@ -51,8 +51,6 @@ function CopyButton({ text }: { text: string }) {
 }
 export default function Home() {
   const { address, chainId, isConnected } = useAccount();
-  const isTestnet = chainId === arcTestnet.id;
-  const network = isTestnet ? arcTestnet : arc;
   const contractAddress = isTestnet ? TESTNET_CONTRACT_ADDRESS : CONTRACT_ADDRESS;
   const { connect, connectors, isPending: connecting } = useConnect();
   const { disconnect } = useDisconnect();
@@ -222,11 +220,6 @@ export default function Home() {
           <div className="muted">Tiny LETS-style proof of concept</div>
         </div>
         <div className="row">
-          <label htmlFor="network">Network</label>
-          <select id="network" className="input" style={{ width: 'auto', margin: 0 }} value={chainId === arcTestnet.id ? arcTestnet.id : arc.id} disabled={!isConnected || switching} onChange={(e) => switchChain({ chainId: Number(e.target.value) as typeof arc.id | typeof arcTestnet.id })}>
-            <option value={arc.id}>Arc Mainnet</option>
-            <option value={arcTestnet.id}>Arc Testnet</option>
-          </select>
         {isConnected ? (
           <button className="btn" onClick={() => disconnect()}>
             Disconnect {short(address!)}
@@ -366,8 +359,8 @@ export default function Home() {
           <b>Status</b>
           <p>{status}</p>
           {lastHash && (
-            <a className="link" href={`${(lastHashChainId === arcTestnet.id ? arcTestnet : arc).blockExplorers.default.url.replace(/\/$/, '')}/tx/${lastHash}`} target="_blank" rel="noreferrer">
-              View transaction on {(lastHashChainId === arcTestnet.id ? arcTestnet : arc).name} Explorer ↗
+            <a className="link" href={`${network.blockExplorers.default.url.replace(/\/$/, '')}/tx/${lastHash}`} target="_blank" rel="noreferrer">
+              View transaction on {network.name} Explorer ↗
             </a>
           )}
         </div>

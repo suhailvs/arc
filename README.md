@@ -11,14 +11,6 @@ A tiny LETS-style mutual-credit ledger deployed on Arc mainnet.
 - No USDC is held by the contract.
 - Arc is used for wallet identity, immutable settlement of the ledger, and USDC-denominated gas.
 
-## Arc mainnet
-
-- Chain ID: `5042`
-- RPC: `https://rpc.mainnet.arc.io`
-- Explorer: `https://explorer.arc.io`
-- Native gas asset: USDC (18 decimals)
-- Arc USDC ERC-20 predeploy: `0x3600000000000000000000000000000000000000` (not used by this POC)
-
 ## Run frontend
 
 ```bash

@@ -38,7 +38,6 @@ export default function Home() {
   const { connect, connectors, isPending: connecting } = useConnect();
   const { disconnect } = useDisconnect();
   const { switchChain, isPending: switching } = useSwitchChain();
-  const [limit, setLimit] = useState('100');
   const [to, setTo] = useState('');
   const [amount, setAmount] = useState('10');
   const [status, setStatus] = useState('');
@@ -113,17 +112,6 @@ export default function Home() {
 
   async function join() {
     if (!(await prepare())) return;
-    let value: bigint;
-    try {
-      value = creditToInt(limit);
-    } catch {
-      setStatus('Credit limit must be a valid number.');
-      return;
-    }
-    if (value <= 0n) {
-      setStatus('Credit limit must be greater than zero.');
-      return;
-    }
 
     try {
       setLastHash(undefined);
@@ -133,7 +121,7 @@ export default function Home() {
         address: contractAddress,
         abi,
         functionName: 'join',
-        args: [value],
+        args: [],
         chainId: network.id,
       });
       setLastHash(hash);
@@ -232,7 +220,7 @@ export default function Home() {
       {!isConnected ? (
         <div className="card">
           <h2>How it works</h2>
-          <p>Join the exchange with a credit limit. When you provide a service, another member transfers credit to you. When you consume a service, your balance can go negative up to your limit.</p>
+          <p>Join the exchange with a fixed credit limit of 1000. When you provide a service, another member transfers credit to you. When you consume a service, your balance can go negative up to your limit.</p>
           <p><b>Example:</b> Alice −20, Bob +20. Total system credit remains exactly 0.</p>
         </div>
       ) : onNetwork && contractConfigured ? (
@@ -263,8 +251,7 @@ export default function Home() {
                 <div className="card">
                   <h2>Join exchange</h2>
                   <p className="muted">This writes your membership to the {network.name} smart contract. It does not transfer USDC.</p>
-                  <label>Credit limit</label>
-                  <input className="input" inputMode="decimal" value={limit} onChange={(e) => setLimit(e.target.value)} />
+                  <p>Every member receives a credit limit of 1000.</p>
                   <button className="btn" disabled={walletPending || receipt.isLoading} onClick={join}>
                     {walletPending ? 'Waiting for MetaMask…' : receipt.isLoading ? 'Confirming…' : 'Join exchange'}
                   </button>
@@ -279,7 +266,7 @@ export default function Home() {
               {joined && (
                 <div className="card">
                   <h2>Record a trade</h2>
-                  <p className="muted">Send positive credit to the member who provided you value.</p>
+                  <p className="muted">Send positive credit to the member who provided you value. Membership and credit balances are internal; USDC is not moved.</p>
                   <label>Recipient wallet</label>
                   <input className="input" placeholder="0x…" value={to} onChange={(e) => setTo(e.target.value)} />
                   <label>Credit amount</label>
@@ -306,11 +293,6 @@ export default function Home() {
         </div>
       )}
 
-      <div className="card">
-        <h3>{network.name} contract</h3>
-        <code>{contractAddress}</code>
-        <p className="muted">Set {isTestnet ? 'NEXT_PUBLIC_TESTNET_CONTRACT_ADDRESS' : 'NEXT_PUBLIC_CONTRACT_ADDRESS'} to the deployed contract address for this network. Membership and credit balances are internal; USDC is not moved.</p>
-      </div>
     </main>
   );
 }

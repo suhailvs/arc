@@ -5,7 +5,7 @@ A tiny LETS-style mutual-credit ledger deployed on Arc mainnet.
 ## Model
 
 - The smart contract is a **zero-sum credit ledger**, not an ERC-20.
-- A member joins with a positive credit limit.
+- Every member joins with a fixed credit limit of 1000.
 - A member may spend into a negative balance up to that limit.
 - A positive transfer increases the recipient balance and decreases the sender balance by exactly the same amount.
 - No USDC is held by the contract.
@@ -38,6 +38,7 @@ export ARC_TESTNET_RPC_URL=https://rpc.testnet.arc.io
 export PRIVATE_KEY=0xYOUR_DEPLOYER_PRIVATE_KEY
 forge build
 forge script script/Deploy.s.sol --rpc-url "$ARC_TESTNET_RPC_URL" --private-key "$PRIVATE_KEY" --broadcast
+# ~/.foundry/bin/forge script script/Deploy.s.sol --rpc-url "$ARC_TESTNET_RPC_URL" --private-key "$PRIVATE_KEY" --broadcast
 ```
 
 Copy the deployed `MutualCredit` address into `.env.local`:
@@ -50,8 +51,8 @@ Then restart Next.js.
 
 ## Demo flow
 
-1. Wallet A connects and joins with limit `100`.
-2. Wallet B connects and joins with limit `100`.
+1. Wallet A connects and joins with a fixed limit of `1000`.
+2. Wallet B connects and joins with a fixed limit of `1000`.
 3. A transfers `20` credit to B.
 4. A becomes `-20`; B becomes `+20`.
 5. B can later transfer `20` back after receiving another service.

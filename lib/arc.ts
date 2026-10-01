@@ -1,7 +1,7 @@
 import { defineChain } from 'viem';
 
 export const arc = defineChain({
-  id: 5042,
+  id: 5042 as const,
   name: 'Arc',
   nativeCurrency: { name:'USDC', symbol:'USDC', decimals:18 },
   rpcUrls: { default:{ http:['https://rpc.mainnet.arc.io'] } },
@@ -9,7 +9,7 @@ export const arc = defineChain({
 });
 
 export const arcTestnet = defineChain({
-  id: 5042002,
+  id: 5042002 as const,
   name: 'Arc Testnet',
   nativeCurrency: { name:'USDC', symbol:'USDC', decimals:18 },
   rpcUrls: { default:{ http:['https://rpc.testnet.arc.io'] } },

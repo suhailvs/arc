@@ -15,7 +15,7 @@ import { arc, arcTestnet } from '../lib/arc';
 import { abi, CONTRACT_ADDRESS, TESTNET_CONTRACT_ADDRESS } from '../lib/contract';
 
 const ZERO = '0x0000000000000000000000000000000000000000' as Address;
-
+const PAGE_SIZE = 10;
 function short(a: string) {
   return `${a.slice(0, 6)}…${a.slice(-4)}`;
 }
@@ -29,7 +29,26 @@ function errorText(error: unknown) {
 function creditToInt(value: string) {
   return parseUnits(value, 18);
 }
-
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      title={copied ? 'Copied!' : 'Copy address'}
+      aria-label="Copy address"
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(text);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1500);
+        } catch {}
+      }}
+      style={{ background: 'none', border: 'none', cursor: 'pointer', marginLeft: 6, padding: 0 }}
+    >
+      {copied ? '✓' : '⧉'}
+    </button>
+  );
+}
 export default function Home() {
   const { address, chainId, isConnected } = useAccount();
   const isTestnet = chainId === arcTestnet.id;
@@ -39,6 +58,8 @@ export default function Home() {
   const { disconnect } = useDisconnect();
   const { switchChain, isPending: switching } = useSwitchChain();
   const [to, setTo] = useState('');
+  const [name, setName] = useState('');
+  const [page, setPage] = useState(0);
   const [amount, setAmount] = useState('10');
   const [status, setStatus] = useState('');
   const [lastHash, setLastHash] = useState<`0x${string}` | undefined>();
@@ -57,7 +78,29 @@ export default function Home() {
       enabled: isConnected && contractConfigured && onNetwork && !!address,
     },
   });
+    const countQuery = useReadContract({
+    address: contractAddress,
+    abi,
+    functionName: 'memberCount',
+    chainId: network.id,
+    query: { enabled: contractConfigured },
+  });
+  const total = Number(countQuery.data ?? 0n);
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
+  const listQuery = useReadContract({
+    address: contractAddress,
+    abi,
+    functionName: 'getMembers',
+    args: [BigInt(page * PAGE_SIZE), BigInt(PAGE_SIZE)],
+    chainId: network.id,
+    query: { enabled: contractConfigured },
+  });
+  const listAddrs = listQuery.data?.[0] ?? [];
+  const listNames = listQuery.data?.[1] ?? [];
+  const listBalances = listQuery.data?.[2] ?? [];
+
+  useEffect(() => { setPage(0); }, [network.id]);
   const { writeContractAsync, isPending: walletPending, error: writeError } = useWriteContract();
   const receipt = useWaitForTransactionReceipt({
     hash: lastHash,
@@ -75,7 +118,7 @@ export default function Home() {
       setStatus(`Transaction submitted. Waiting for ${network.name} confirmation…`);
     } else if (receipt.isSuccess) {
       setStatus(`Confirmed on ${network.name}. Refreshing your exchange membership…`);
-      memberQuery.refetch().then(() => {
+      Promise.all([memberQuery.refetch(), countQuery.refetch(), listQuery.refetch()]).then(() => {
         setStatus(`Confirmed on ${network.name}. You are now a member of the exchange.`);
       });
     } else if (receipt.isError) {
@@ -112,7 +155,11 @@ export default function Home() {
 
   async function join() {
     if (!(await prepare())) return;
-
+    const trimmed = name.trim();
+    if (!trimmed || new TextEncoder().encode(trimmed).length > 32) {
+      setStatus('Enter a name (1-32 characters).');
+      return;
+    }
     try {
       setLastHash(undefined);
       setLastHashChainId(network.id);
@@ -121,7 +168,7 @@ export default function Home() {
         address: contractAddress,
         abi,
         functionName: 'join',
-        args: [],
+        args: [trimmed],
         chainId: network.id,
       });
       setLastHash(hash);
@@ -252,6 +299,8 @@ export default function Home() {
                   <h2>Join exchange</h2>
                   <p className="muted">This writes your membership to the {network.name} smart contract. It does not transfer USDC.</p>
                   <p>Every member receives a credit limit of 1000.</p>
+                  <label>Display name</label>
+                  <input className="input" maxLength={32} placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} />
                   <button className="btn" disabled={walletPending || receipt.isLoading} onClick={join}>
                     {walletPending ? 'Waiting for MetaMask…' : receipt.isLoading ? 'Confirming…' : 'Join exchange'}
                   </button>
@@ -259,7 +308,7 @@ export default function Home() {
               ) : (
                 <div className="card success">
                   <h2>✓ Joined exchange</h2>
-                  <p>You are a member. Your balance and credit limit are stored on {network.name}.</p>
+                  <p>You are a member as <b>{member?.[3]}</b>. Your balance and credit limit are stored on {network.name}.</p>
                 </div>
               )}
 
@@ -280,7 +329,38 @@ export default function Home() {
           )}
         </>
       ) : null}
+      {contractConfigured && (
+        <div className="card">
+          <h2>Members ({total})</h2>
+          {listQuery.isLoading ? (
+            <p className="muted">Loading members…</p>
+          ) : listAddrs.length === 0 ? (
+            <p className="muted">No members yet.</p>
+          ) : (
+            <table style={{ width: '100%', textAlign: 'left' }}>
+              <thead>
+                <tr><th>Name</th><th>Wallet</th><th>Balance</th></tr>
+              </thead>
+              <tbody>
+                {listAddrs.map((a, i) => (
+                  <tr key={a}>
+                    <td>{listNames[i]}{a.toLowerCase() === address?.toLowerCase() ? ' (you)' : ''}</td>
+                    <td>{short(a)}<CopyButton text={a} /></td>
+                    <td>{formatUnits(listBalances[i], 18)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+          <div className="row between" style={{ marginTop: 12 }}>
+            <button className="btn" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>← Prev</button>
+            <span className="muted">Page {page + 1} of {totalPages}</span>
+            <button className="btn" disabled={page + 1 >= totalPages} onClick={() => setPage((p) => p + 1)}>Next →</button>
+          </div>
+        </div>
+      )}
 
+       
       {status && (
         <div className="card">
           <b>Status</b>
